@@ -10,13 +10,14 @@
   <input id="password" type="password" placeholder="Password"><br><br>
 
   <button id="loginBtn">Login</button>
-  <p id="message"></p>
+  <button id="signupBtn">Sign Up</button> <!-- New signup button -->
 
-  <a href="signup.html">Don't have an account? Sign Up</a>
+  <p id="message"></p>
 
   <script type="module">
     import { supabase } from './supabase.js';
 
+    // LOGIN BUTTON
     document.getElementById("loginBtn").addEventListener("click", async () => {
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
@@ -34,6 +35,11 @@
         localStorage.setItem("username", data.username);
         window.location.href = "index.html";
       }
+    });
+
+    // SIGNUP BUTTON (REDIRECT TO SIGNUP PAGE)
+    document.getElementById("signupBtn").addEventListener("click", () => {
+      window.location.href = "signup.html";
     });
   </script>
 </body>
