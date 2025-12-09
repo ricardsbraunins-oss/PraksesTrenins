@@ -71,7 +71,7 @@
       }
 
       const { error } = await supabase
-        .from('responses')
+        .from('todolist')
         .insert([{ uzd, uzdveids, svarigums }]);
 
       if (error) {
