@@ -1,0 +1,46 @@
+<script type="module">
+import { supabase } from './supabase.js';
+
+// Cooldown function
+function startCooldown(seconds) {
+  const msgEl = document.getElementById("message");
+  let timeLeft = seconds;
+  msgEl.innerText = `Saved! Cooldown: ${timeLeft}s`;
+
+  document.getElementById("send").disabled = true;
+
+  const interval = setInterval(() => {
+    timeLeft--;
+    msgEl.innerText = `Saved! Cooldown: ${timeLeft}s`;
+
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+      msgEl.innerText = "Ready!";
+      document.getElementById("send").disabled = false;
+    }
+  }, 1000);
+}
+
+document.getElementById("send").addEventListener("click", async () => {
+  const q1 = document.getElementById("q1").value;
+  const q2 = document.getElementById("q2").value;
+  const q3 = document.getElementById("q3").value;
+
+  // Validation
+  if (q1.length < 3 || q2.length < 3) {
+    document.getElementById("message").innerText = "Min 3 simboli!";
+    return;
+  }
+
+  const { error } = await supabase
+    .from('responses')
+    .insert([{ q1, q2, q3 }]);
+
+  if (error) {
+    document.getElementById("message").innerText = "Error: " + error.message;
+    return;
+  }
+
+  startCooldown(10);
+});
+</script>
