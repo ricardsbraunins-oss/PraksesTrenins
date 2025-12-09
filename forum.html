@@ -25,11 +25,11 @@
   <input id="q3" type="number" minlength="5" required><br><br>
 
   <button id="send">Submit</button>
-  <button id="logoutBtn">Logout</button>
+  
   <br>
   <br>
   <button onclick="window.location.href='responses.html'">View All Responses</button>
-
+  <button onclick="window.location.href='index.html'">Atpakaļ sākumā!</button>
   <p id="message"></p>
 
   <script type="module">
@@ -65,10 +65,6 @@ msgEl.innerText = "Saved!";
 startCooldown(10);
 
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      localStorage.removeItem("username");
-      window.location.href = "login.html";
-    });
   </script>
 </body>
 </html>
