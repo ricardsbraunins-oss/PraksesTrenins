@@ -1,49 +1,87 @@
-<script type="module">
-import { supabase } from './supabase.js';
+<!DOCTYPE html>
+<html>
+<head>
+  <title>todo</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h2>To do list</h2>
 
-// Cooldown function OUTSIDE the click event
-function startCooldown(seconds) {
-  const msgEl = document.getElementById("message");
-  let timeLeft = seconds;
-  msgEl.innerText = `Saved! Cooldown: ${timeLeft}s`;
-
-  const interval = setInterval(() => {
-    timeLeft--;
-    msgEl.innerText = `Saved! Cooldown: ${timeLeft}s`;
-
-    if (timeLeft <= 0) {
-      clearInterval(interval);
-      msgEl.innerText = "Ready!";
-      document.getElementById("send").disabled = false; // Re-enable button
+  <script>
+    // PROTECT THE PAGE
+    if (!localStorage.getItem("username")) {
+      window.location.href = "login.html";
     }
-  }, 1000);
-}
+  </script>
 
-document.getElementById("send").addEventListener("click", async () => {
-  const uzd = document.getElementById("uzd").value;
-  const uzdveids = document.getElementById("uzdveids").value;
-  const svarigums = document.getElementById("svarigums").value;
+  <label>Uzdevums</label><br>
+  <input id="uzd" type="text" minlength="5" required placeholder="Apraksti uzdevumu!"><br><br>
 
-  // Client validation
-  if (uzd.length < 5) {
-    document.getElementById("message").innerText = "Min 5 symbols!";
-    return;
-  }
+  <label for="uzdveids">Uzdevuma veids:</label><br>
+  <select id="uzdveids">
+    <option value="Skolas darbs">Skolas darbs</option>
+    <option value="Mājas darbs">Mājas darbs</option>
+    <option value="Personālais">Personālais</option>
+  </select><br><br>
 
-  const sendBtn = document.getElementById("send");
-  sendBtn.disabled = true;
+  <label for="svarigums">Uzdevuma svarīgums</label><br>
+  <select id="svarigums">
+    <option value="Steidzams">Steidzams</option>
+    <option value="Nedēļa pabeigšanai">Nedēļa pabeigšanai</option>
+    <option value="Kad gribi pabeidz">Kad gribi pabeidz</option>
+  </select><br><br>
 
-  const { error } = await supabase
-    .from('responses')
-    .insert([{ uzd, uzdveids, svarigums }]);
+  <button id="send">Submit</button>
+  <br><br>
+  <button onclick="window.location.href='todolist.html'">Skatīt visus uzd.</button>
 
-  if (error) {
-    document.getElementById("message").innerText = "Error: " + error.message;
-    sendBtn.disabled = false;
-    return;
-  }
+  <p id="message"></p>
 
-  // Cooldown starts only when saved successfully
-  startCooldown(10);
-});
-</script>
+  <script type="module">
+    import { supabase } from './supabase.js';
+
+    function startCooldown(seconds) {
+      const msgEl = document.getElementById("message");
+      const sendBtn = document.getElementById("send");
+      
+      sendBtn.disabled = true;
+      let timeLeft = seconds;
+      msgEl.innerText = `Saved! Cooldown: ${timeLeft}s`;
+
+      const interval = setInterval(() => {
+        timeLeft--;
+        msgEl.innerText = `Saved! Cooldown: ${timeLeft}s`;
+
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          msgEl.innerText = "Ready!";
+          sendBtn.disabled = false;
+        }
+      }, 1000);
+    }
+
+    document.getElementById("send").addEventListener("click", async () => {
+      const uzd = document.getElementById("uzd").value;
+      const uzdveids = document.getElementById("uzdveids").value;
+      const svarigums = document.getElementById("svarigums").value;
+
+      if (uzd.length < 5) {
+        document.getElementById("message").innerText = "Min 5 simboli!";
+        return;
+      }
+
+      const { error } = await supabase
+        .from('responses')
+        .insert([{ uzd, uzdveids, svarigums }]);
+
+      if (error) {
+        document.getElementById("message").innerText = "Error: " + error.message;
+        return;
+      }
+
+      startCooldown(10);
+    });
+  </script>
+
+</body>
+</html>
