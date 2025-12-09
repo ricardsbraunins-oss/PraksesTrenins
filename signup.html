@@ -14,7 +14,7 @@
   <input id="confirmPassword" type="password" placeholder="Confirm Password"><br><br>
 
   <button id="signupBtn">Sign Up</button>
-  <button id="loginRedirectBtn">Go to Login</button>
+  <button onclick="window.location.href='login.html'">Atpakaļ sākumā!</button>
 
   <p id="message"></p>
 
@@ -44,11 +44,6 @@
           window.location.href = "login.html"; // Redirect after success
         }, 1000);
       }
-    });
-
-    // Redirect to login page
-    document.getElementById("loginRedirectBtn").addEventListener("click", () => {
-      window.location.href = "login.html";
     });
   </script>
 </body>
