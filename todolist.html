@@ -24,7 +24,7 @@
 
     async function loadResponses() {
       const { data, error } = await supabase
-        .from('responses')
+        .from('todolist')
         .select('*');
 
       if (error) {
