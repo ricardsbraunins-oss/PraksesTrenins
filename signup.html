@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sign Up</title>
+  <title>Piereģistrējies!</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h2>Create Account</h2>
+  <h2>Izveido kontu!</h2>
 
   <input id="username" type="text" placeholder="Username"><br><br>
 
@@ -26,9 +26,9 @@
       const password = document.getElementById("password").value;
       const confirmPassword = document.getElementById("confirmPassword").value;
 
-      // Check if passwords match
+      // Pārbauda vai abas paroles pareizas
       if (password !== confirmPassword) {
-        document.getElementById("message").innerText = "Passwords do not match!";
+        document.getElementById("message").innerText = "Paroles nesakrīt!";
         return;
       }
 
@@ -41,7 +41,7 @@
 
       if (!error) {
         setTimeout(() => {
-          window.location.href = "login.html"; // Redirect after success
+          window.location.href = "login.html";
         }, 1000);
       }
     });
