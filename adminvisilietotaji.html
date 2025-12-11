@@ -23,6 +23,7 @@
     <th>id</th>
     <th>username</th>
     <th>password</th>
+    <th>mainīt paroli</th>
     <th>dzēst</th>
   </tr>
 </table>
@@ -86,6 +87,38 @@ async function loadUsers() {
     deleteCell.appendChild(deleteBtn);
   });
 }
+
+// CHANGE PASSWORD BUTTON
+const changePassCell = newRow.insertCell(3);
+const changeBtn = document.createElement("button");
+changeBtn.innerText = "Mainīt";
+changeBtn.style.width = "80px";
+changeBtn.style.color = "blue";
+
+changeBtn.addEventListener("click", async () => {
+  const newPass = prompt("Ievadi jauno paroli:");
+
+  if (!newPass || newPass.trim() === "") {
+    alert("Parole nevar būt tukša!");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("users")
+    .update({ password: newPass })
+    .eq("id", row.id);
+
+  if (error) {
+    alert("Kļūda mainot paroli: " + error.message);
+    return;
+  }
+
+  newRow.cells[2].innerText = newPass; // update table visually
+  alert("Parole veiksmīgi nomainīta!");
+});
+
+changePassCell.appendChild(changeBtn);
+  
 
 loadUsers();
 </script>
