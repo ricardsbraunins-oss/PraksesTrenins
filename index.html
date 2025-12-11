@@ -45,6 +45,7 @@
       localStorage.removeItem("username");
       window.location.href = "login.html";
     });
+    document.getElementById("usernameDisplay").textContent = username;
   </script>
 
   <div id="userDisplay" style="
@@ -54,6 +55,7 @@
   font-size: 18px;
   color: #00eaff;
     z-index: 9999;
-"><br><button id="logoutBtn">Logout</button></div>
+"><button id="logoutBtn">Logout</button>
+  <span id="usernameDisplay"></span></div>
 </body>
 </html>
