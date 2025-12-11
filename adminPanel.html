@@ -1,1 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin page</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  
+  <div id="userDisplay" style="
+  position: fixed;
+  top: 10px;
+  right: 15px;
+  font-size: 18px;
+  color: #00eaff;
+"></div>  
 
+  <h2>Admin page</h2>
+  <button onclick="window.location.href='forum.html'">Aptauja!</button>
+  <button onclick="window.location.href='todoinput.html'">ToDoList!</button>
+  
+  
+<script>
+     const username = localStorage.getItem("username");
+  if (username !== "admin") {
+    alert("Access denied! Only admin can view this page.");
+    window.location.href = "index.html"; 
+  } //parbauda vai ir admin konts
+    
+  </script>
+</body>
+</html>
