@@ -1,1 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AdminVisiLietotāji</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  
+<div id="userDisplay" style="
+  position: fixed;
+  top: 10px;
+  right: 15px;
+  font-size: 18px;
+  color: #00eaff;
+"></div>
+
+  <h2>Visi saites users</h2>
+  <p style="color:red;">Tikai administratoram!</p>
+  <br>
+  <table border="1" id="users">
+    <tr>
+      <th>id</th>
+      <th>username</th>
+      <th>password</th>
+      <th>mainīt paroli</th>
+      <th>dzēst</th>
+    </tr>
+  </table>
+ <br>
+  <button onclick="window.location.href='index.html'">Atpakaļ!</button>
+  
+<script>
+  const username = localStorage.getItem("username");
+  document.getElementById("userDisplay").innerText = username;
+</script>
+
+  <script type="module">
+    import { supabase } from './supabase.js';
+    //parbauda vai ir admin.
+    const username = localStorage.getItem("username");
+    if (username !== "admin") {
+      alert("Access denied! Only admin can view this page.");
+      window.location.href = "index.html";
+    }  
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+
+      if (error) {
+        alert("Error: " + error.message);
+        return;
+      }
+
+      const table = document.getElementById("users");
+
+      data.forEach(row => {
+        const newRow = table.insertRow();
+
+        newRow.insertCell(0).innerText = row.id;
+        newRow.insertCell(1).innerText = row.username;
+        newRow.insertCell(2).innerText = row.password;
+
+        // DELETE BUTTON
+        const deleteCell = newRow.insertCell(4);
+        const deleteBtn = document.createElement("button");
+        deleteBtn.style.width = "80px";
+        deleteBtn.innerText = "X";
+        deleteBtn.style.color = "red";
+
+        deleteBtn.addEventListener("click", async () => {
+          if (!confirm("Tiešām dzēst šo uzdevumu?")) return;
+
+          await supabase
+            .from("users")
+            .delete()
+            .eq("id", row.id);
+
+          newRow.remove();
+        });
+
+        deleteCell.appendChild(deleteBtn);
+      });
+    }
+
+    loadResponses();
+  </script>
+
+</body>
+</html>
 
