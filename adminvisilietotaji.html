@@ -1,42 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>AdminVisiLietotāji</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-
-<div id="userDisplay" style="
-  position: fixed;
-  top: 10px;
-  right: 15px;
-  font-size: 18px;
-  color: #00eaff;
-"></div>
-
-<h2>Visi saites users</h2>
-<p style="color:red;">Tikai administratoram!</p>
-<br>
-
-<table border="1" id="users">
-  <tr>
-    <th>id</th>
-    <th>username</th>
-    <th>password</th>
-    <th>Show</th>
-    <th>mainīt paroli</th>
-    <th>dzēst</th>
-  </tr>
-</table>
-
-<br>
-<button onclick="window.location.href='index.html'">Atpakaļ!</button>
-
-<script>
-// show username at top right
-document.getElementById("userDisplay").innerText = localStorage.getItem("username");
-</script>
-
 <script type="module">
 import { supabase } from './supabase.js';
 
@@ -47,7 +8,6 @@ if (currentUser !== "admin") {
   window.location.href = "index.html";
 }
 
-// MAIN FUNCTION
 async function loadUsers() {
   const { data, error } = await supabase
     .from('users')
@@ -63,12 +23,75 @@ async function loadUsers() {
   data.forEach(row => {
     const newRow = table.insertRow();
 
+    // ID
     newRow.insertCell(0).innerText = row.id;
+
+    // USERNAME
     newRow.insertCell(1).innerText = row.username;
-    newRow.insertCell(2).innerText = row.password;
+
+    // PASSWORD (hidden)
+    const passCell = newRow.insertCell(2);
+    passCell.innerText = "*****";
+
+    // SHOW/HIDE PASSWORD BUTTON
+    const showCell = newRow.insertCell(3);
+    const showBtn = document.createElement("button");
+    showBtn.innerText = "Show";
+    showBtn.style.width = "80px";
+
+    let showing = false;
+
+    showBtn.addEventListener("click", () => {
+      if (!showing) {
+        passCell.innerText = row.password;
+        showBtn.innerText = "Hide";
+        showing = true;
+      } else {
+        passCell.innerText = "*****";
+        showBtn.innerText = "Show";
+        showing = false;
+      }
+    });
+
+    showCell.appendChild(showBtn);
+
+    // CHANGE PASSWORD BUTTON
+    const changePassCell = newRow.insertCell(4);
+    const changeBtn = document.createElement("button");
+    changeBtn.innerText = "Mainīt";
+    changeBtn.style.width = "80px";
+    changeBtn.style.color = "blue";
+
+    changeBtn.addEventListener("click", async () => {
+      const newPass = prompt("Ievadi jauno paroli:");
+
+      if (!newPass || newPass.trim() === "") {
+        alert("Parole nevar būt tukša!");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("users")
+        .update({ password: newPass })
+        .eq("id", row.id);
+
+      if (error) {
+        alert("Kļūda mainot paroli: " + error.message);
+        return;
+      }
+
+      row.password = newPass;
+      passCell.innerText = "*****";
+      showBtn.innerText = "Show";
+      showing = false;
+
+      alert("Parole veiksmīgi nomainīta!");
+    });
+
+    changePassCell.appendChild(changeBtn);
 
     // DELETE BUTTON
-    const deleteCell = newRow.insertCell(3);
+    const deleteCell = newRow.insertCell(5);
     const deleteBtn = document.createElement("button");
     deleteBtn.style.width = "80px";
     deleteBtn.innerText = "X";
@@ -86,70 +109,9 @@ async function loadUsers() {
     });
 
     deleteCell.appendChild(deleteBtn);
+
   });
 }
 
- // PASSWORD (hidden by default)
-  const passCell = newRow.insertCell(2);
-  passCell.innerText = "*****"; // hide actual password
-
-  // SHOW/HIDE PASSWORD BUTTON
-  const showCell = newRow.insertCell(3);
-  const showBtn = document.createElement("button");
-  showBtn.innerText = "Show";
-  showBtn.style.width = "80px";
-
-  let showing = false; // track state
-
-  showBtn.addEventListener("click", () => {
-    if (!showing) {
-      passCell.innerText = row.password; // reveal password
-      showBtn.innerText = "Hide";
-      showing = true;
-    } else {
-      passCell.innerText = "*****"; // hide again
-      showBtn.innerText = "Show";
-      showing = false;
-    }
-  });
-
-  showCell.appendChild(showBtn);
-  
-
-// CHANGE PASSWORD BUTTON
-const changePassCell = newRow.insertCell(3);
-const changeBtn = document.createElement("button");
-changeBtn.innerText = "Mainīt";
-changeBtn.style.width = "80px";
-changeBtn.style.color = "blue";
-
-changeBtn.addEventListener("click", async () => {
-  const newPass = prompt("Ievadi jauno paroli:");
-
-  if (!newPass || newPass.trim() === "") {
-    alert("Parole nevar būt tukša!");
-    return;
-  }
-
-  const { error } = await supabase
-    .from("users")
-    .update({ password: newPass })
-    .eq("id", row.id);
-
-  if (error) {
-    alert("Kļūda mainot paroli: " + error.message);
-    return;
-  }
-
-  newRow.cells[2].innerText = newPass; // update table visually
-  alert("Parole veiksmīgi nomainīta!");
-});
-
-changePassCell.appendChild(changeBtn);
-  
-
 loadUsers();
 </script>
-
-</body>
-</html>
