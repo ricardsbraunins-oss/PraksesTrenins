@@ -21,72 +21,73 @@
   <button onclick="window.location.href='todoinput.html'">Jauns ToDo</button>
 
   <script type="module">
-  import { supabase } from './supabase.js';
+    import { supabase } from './supabase.js';
 
-  // PROTECT THE PAGE
-  if (!localStorage.getItem("username")) {
-    window.location.href = "login.html";
-  }
-
-  async function loadResponses() {
-    const { data, error } = await supabase
-      .from('todolist')
-      .select('*');
-
-    if (error) {
-      alert("Error: " + error.message);
-      return;
+    
+    if (!localStorage.getItem("username")) {
+      window.location.href = "login.html";
     }
 
-    const table = document.getElementById("Todolist");
+    async function loadResponses() {
+      const { data, error } = await supabase
+        .from('todolist')
+        .select('*');
 
-    data.forEach(row => {
-      const newRow = table.insertRow();
-      newRow.insertCell(0).innerText = row.uzd;
-      newRow.insertCell(1).innerText = row.uzdveids;
-      newRow.insertCell(2).innerText = row.svarigums;
+      if (error) {
+        alert("Error: " + error.message);
+        return;
+      }
 
-      
-      const deleteCell = newRow.insertCell(4);
-const deleteBtn = document.createElement("button");
-deleteBtn.innerText = "X";
-deleteBtn.style.color = "red";
-deleteBtn.style.cursor = "pointer";
-deleteBtn.style.padding = "6px 10px";
+      const table = document.getElementById("Todolist");
 
-deleteBtn.addEventListener("click", async () => {
-  if (!confirm("Tiešām dzēst šo uzdevumu?")) return;
+      data.forEach(row => {
+        const newRow = table.insertRow();
 
-  await supabase
-    .from("todolist")
-    .delete()
-    .eq("id", row.id);
+        
+        newRow.insertCell(0).innerText = row.uzd;
+        newRow.insertCell(1).innerText = row.uzdveids;
+        newRow.insertCell(2).innerText = row.svarigums;
 
-  newRow.remove(); 
-});
+        
+        const checkCell = newRow.insertCell(3);
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = row.pabeigts === true;
 
-deleteCell.appendChild(deleteBtn);
+        checkbox.addEventListener("change", async () => {
+          await supabase
+            .from("todolist")
+            .update({ pabeigts: checkbox.checked })
+            .eq("id", row.id);
+        });
 
-      
-      const checkCell = newRow.insertCell(3);
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = row.pabeigts === true;
+        checkCell.appendChild(checkbox);
 
-      checkbox.addEventListener("change", async () => {
-        await supabase
-          .from("todolist")
-          .update({ pabeigts: checkbox.checked })
-          .eq("id", row.id);
+        
+        const deleteCell = newRow.insertCell(4);
+        const deleteBtn = document.createElement("button");
+        deleteBtn.innerText = "X";
+        deleteBtn.style.color = "red";
+        deleteBtn.style.cursor = "pointer";
+        deleteBtn.style.padding = "6px 10px";
+
+        deleteBtn.addEventListener("click", async () => {
+          if (!confirm("Tiešām dzēst šo uzdevumu?")) return;
+
+          await supabase
+            .from("todolist")
+            .delete()
+            .eq("id", row.id);
+
+          newRow.remove(); 
+        });
+
+        deleteCell.appendChild(deleteBtn);
       });
+    }
 
-      checkCell.appendChild(checkbox);
-    });
-  }
-
-  loadResponses();
-</script>
-
+    loadResponses();
+  </script>
 
 </body>
 </html>
