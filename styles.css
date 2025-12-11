@@ -1,4 +1,4 @@
-/* Futuristic Neon Theme */
+
 body {
   font-family: "Segoe UI", Arial, sans-serif;
   background: radial-gradient(circle at center, #0a0f1b, #000000);
@@ -8,7 +8,7 @@ body {
   padding-top: 60px;
 }
 
-/* Headings */
+
 h2 {
   font-size: 32px;
   margin-bottom: 20px;
@@ -18,7 +18,7 @@ h2 {
   text-shadow: 0 0 10px #00eaff, 0 0 20px #0086a3;
 }
 
-/* Inputs */
+
 input {
   width: 260px;
   padding: 12px;
@@ -37,7 +37,7 @@ input:focus {
   box-shadow: 0 0 15px #00ffee;
 }
 
-/* Buttons */
+
 button {
   display: inline-block;
   width: 260px;
@@ -61,7 +61,6 @@ button:hover {
   box-shadow: 0 0 12px #00eaff, 0 0 20px #00c4d6;
 }
 
-/* Table in responses page */
 table {
   margin: 0 auto;
   width: 80%;
@@ -80,7 +79,7 @@ th {
   text-shadow: 0 0 10px #00eaff;
 }
 
-/* Messages */
+
 #message {
   margin-top: 20px;
   font-size: 18px;
