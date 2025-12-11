@@ -17,13 +17,21 @@
   </script>
 <button onclick="window.location.href='forum.html'">Aptauja!</button>
   <button onclick="window.location.href='todoinput.html'">ToDoList!</button>
+  <button id="adminBtn" style="display:none;" onclick="window.location.href='adminPanel.html'">Admin Panel</button>
   <br>
   <br>
    <button id="logoutBtn">Logout</button>
   <p id="message"></p>
 
   <script type="module">
-  
+    
+  const username = localStorage.getItem("username");
+
+  if (username === "admin") {
+    document.getElementById("adminBtn").style.display = "inline-block";
+  }
+
+
     document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem("username");
       window.location.href = "login.html";
