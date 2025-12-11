@@ -1,4 +1,4 @@
-
+/* Galvenais lapas stils */
 body {
   font-family: "Segoe UI", Arial, sans-serif;
   background: radial-gradient(circle at center, #0a0f1b, #000000);
@@ -8,7 +8,7 @@ body {
   padding-top: 60px;
 }
 
-
+/* Virsrakstu stils */
 h2 {
   font-size: 32px;
   margin-bottom: 20px;
@@ -18,9 +18,8 @@ h2 {
   text-shadow: 0 0 10px #00eaff, 0 0 20px #0086a3;
 }
 
-
+/* Visi input lauki */
 input {
-  
   padding: 12px;
   margin: 12px;
   border-radius: 8px;
@@ -32,12 +31,13 @@ input {
   box-shadow: 0 0 10px #00eaff50;
 }
 
+/* Input fokusā */
 input:focus {
   border-color: #00ffee;
   box-shadow: 0 0 15px #00ffee;
 }
 
-
+/* Visas pogas */
 button {
   display: inline-block;
   width: 260px;
@@ -55,12 +55,14 @@ button {
   letter-spacing: 2px;
 }
 
+/* Pogu hover efekts */
 button:hover {
   background: #00eaff;
   color: #001b33;
   box-shadow: 0 0 12px #00eaff, 0 0 20px #00c4d6;
 }
 
+/* Tabula */
 table {
   margin: 0 auto;
   width: 80%;
@@ -69,17 +71,19 @@ table {
   margin-top: 20px;
 }
 
+/* Tabulas šūnas */
 th, td {
   padding: 12px;
   border-bottom: 2px solid #00eaff40;
 }
 
+/* Tabulas virsraksti */
 th {
   background: #001b33;
   text-shadow: 0 0 10px #00eaff;
 }
 
-
+/* Ziņojuma teksts (kļūdas, statusi utt.) */
 #message {
   margin-top: 20px;
   font-size: 18px;
