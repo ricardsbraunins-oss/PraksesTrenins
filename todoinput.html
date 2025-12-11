@@ -8,7 +8,7 @@
   <h2>To do list</h2>
 
   <script>
-    // PROTECT THE PAGE
+    
     if (!localStorage.getItem("username")) {
       window.location.href = "login.html";
     }
@@ -65,15 +65,22 @@
       const uzd = document.getElementById("uzd").value;
       const uzdveids = document.getElementById("uzdveids").value;
       const svarigums = document.getElementById("svarigums").value;
+      const username = localStorage.getItem("username"); 
 
       if (uzd.length < 5) {
         document.getElementById("message").innerText = "Min 5 simboli!";
         return;
       }
 
+      
       const { error } = await supabase
         .from('todolist')
-        .insert([{ uzd, uzdveids, svarigums }]);
+        .insert([{
+          uzd,
+          uzdveids,
+          svarigums,
+          username   
+        }]);
 
       if (error) {
         document.getElementById("message").innerText = "Error: " + error.message;
