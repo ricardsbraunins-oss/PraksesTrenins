@@ -6,6 +6,14 @@
 </head>
 <body>
   
+  <div id="userDisplay" style="
+  position: fixed;
+  top: 10px;
+  right: 15px;
+  font-size: 18px;
+  color: #00eaff;
+"></div>  
+
   <h2>PraksesMājaslapa</h2>
   <p>Šajā mājaslapā ir vairāki projektiņi ko esmu paguvis uztaizit pa prakes laiku 
   kā arī man šie projekti ir kā palīglīdzekļi manā ikdienas dzīve!</p>
@@ -14,7 +22,14 @@
     if (!localStorage.getItem("username")) {
       window.location.href = "login.html";
     }
+
+    const username = localStorage.getItem("username");
+  document.getElementById("userDisplay").innerText = username;
+    
   </script>
+
+
+  
 <button onclick="window.location.href='forum.html'">Aptauja!</button>
   <button onclick="window.location.href='todoinput.html'">ToDoList!</button>
   <button id="adminBtn" style="display:none;" onclick="window.location.href='adminPanel.html'">Admin Panel</button>
