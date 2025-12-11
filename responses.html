@@ -1,18 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Submitted Answers</title>
+  <title>Aptaujas atbildes</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-  <h2>All Submitted Responses</h2>
+  
+ <script>
+    if (!localStorage.getItem("username")) {
+      window.location.href = "login.html";
+    } //parbauda vai ir logged in.
+  </script>
+  
+  <h2>Visas aptaujas atbildes</h2>
 
   <table border="1" id="responsesTable">
     <tr>
-      <th>Name</th>
-      <th>Favorite Color</th>
-      <th>Age</th>
+      <th>Vārds</th>
+      <th>Mīļākā krāsa</th>
+      <th>Vecums</th>
+      <th>Ar ko pārvietojas</th>
+      <th>Kur mācās/strādā</th>
+      <th>Dzīvo dienesta viesnīcā?</th>
     </tr>
   </table>
 
@@ -38,6 +47,9 @@
         newRow.insertCell(0).innerText = row.q1;
         newRow.insertCell(1).innerText = row.q2;
         newRow.insertCell(2).innerText = row.q3;
+        newRow.insertCell(3).innerText = row.q4;
+        newRow.insertCell(4).innerText = row.q5;
+        newRow.insertCell(5).innerText = row.q6;
       });
     }
 
@@ -47,9 +59,7 @@
 
 
 
-  if (!localStorage.getItem("username")) {
-    window.location.href = "login.html";
-  }
+  
 
 
   </script>
