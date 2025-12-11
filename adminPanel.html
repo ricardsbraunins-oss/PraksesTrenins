@@ -6,31 +6,53 @@
 </head>
 <body>
   
+  <!-- Parāda lietotājvārdu augšējā labajā stūrī -->
   <div id="userDisplay" style="
-  position: fixed;
-  top: 10px;
-  right: 15px;
-  font-size: 18px;
-  color: #00eaff;
-"></div>  
+    position: fixed;
+    top: 10px;
+    right: 15px;
+    font-size: 18px;
+    color: #00eaff;
+  "></div>  
 
   <h2>Admin page</h2>
-  <button onclick="window.location.href='adminvisitodo.html'">Redzi visus todolist ierakstus visiem user!</button>
-  <br> <br>
-  <button onclick="window.location.href='adminvisilietotaji.html'">Redzi visus user un rediģe tos!</button>
-  <br> <br>
-  <button onclick="window.location.href='adminresponses.html'">Admin forum atbildes!</button>
-  <br> <br>
-  <button onclick="window.location.href='index.html'">Atpakaļ!</button>
+
+  <!-- Poga lai apskatītu visus todo ierakstus -->
+  <button onclick="window.location.href='adminvisitodo.html'">
+    Redzi visus todolist ierakstus visiem user
+  </button>
+  <br><br>
+
+  <!-- Poga lai apskatītu un rediģētu lietotājus -->
+  <button onclick="window.location.href='adminvisilietotaji.html'">
+    Redzi visus user un rediģe tos
+  </button>
+  <br><br>
+
+  <!-- Poga uz admin atbildēm -->
+  <button onclick="window.location.href='adminresponses.html'">
+    Admin forum atbildes
+  </button>
+  <br><br>
+
+  <!-- Poga atpakaļ uz galveno lapu -->
+  <button onclick="window.location.href='index.html'">
+    Atpakaļ
+  </button>
   
-  
-<script>
-     const username = localStorage.getItem("username");
-  if (username !== "admin") {
-    alert("Access denied! Only admin can view this page.");
-    window.location.href = "index.html"; 
-  } //parbauda vai ir admin konts
-    
+  <script>
+    // Paņem lietotājvārdu
+    const username = localStorage.getItem("username")
+
+    // Pārbauda vai lietotājs ir admin
+    if (username !== "admin") {
+      alert("Access denied! Only admin can view this page.")
+      window.location.href = "index.html"
+    }
+
+    // Parāda lietotājvārdu augšējā stūrī
+    document.getElementById("userDisplay").textContent = username
   </script>
+
 </body>
 </html>
