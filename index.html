@@ -5,65 +5,63 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  
-    
 
   <h2>PraksesMājaslapa</h2>
-  <p>Šajā mājaslapā ir vairāki projektiņi ko esmu paguvis uztaizit pa prakes laiku 
-  kā arī man šie projekti ir kā palīglīdzekļi manā ikdienas dzīve!</p>
-  
+
+  <p>
+    Šajā lapā ir projekti kurus izveidoju prakses laikā. Tie man palīdz ikdienā.
+  </p>
+
   <script>
-    if (!localStorage.getItem("username")) {
-      window.location.href = "login.html";
+    // Pārbauda vai lietotājs ir ielogojies
+    const username = localStorage.getItem("username")
+    if (!username) {
+      window.location.href = "login.html"
+    }
+  </script>
+
+  <!-- Pogas uz citām lapām -->
+  <button onclick="window.location.href='forum.html'">Aptauja</button>
+  <button onclick="window.location.href='todoinput.html'">ToDoList</button>
+  <button id="adminBtn" style="display:none;" onclick="window.location.href='adminPanel.html'">Admin Panel</button>
+  
+  <script type="module">
+    // Ja lietotājs ir admin, parāda admin pogu
+    if (username === "admin") {
+      document.getElementById("adminBtn").style.display = "inline-block"
     }
 
-    const username = localStorage.getItem("username");
-  document.getElementById("userDisplay").innerText = username;
-    
-  </script>
-
-
-  
-<button onclick="window.location.href='forum.html'">Aptauja!</button>
-  <button onclick="window.location.href='todoinput.html'">ToDoList!</button>
-  <button id="adminBtn" style="display:none;" onclick="window.location.href='adminPanel.html'">Admin Panel</button>
-  <br>
-  <br>
-   
-  <p id="message"></p>
-
-  <script type="module">
-    
-  const username = localStorage.getItem("username");
-
-  if (username === "admin") {
-    document.getElementById("adminBtn").style.display = "inline-block";
-  }
-
-
+    // Izlogošanās poga
     document.getElementById("logoutBtn").addEventListener("click", () => {
-      localStorage.removeItem("username");
-      window.location.href = "login.html";
-    });
-    document.getElementById("usernameDisplay").textContent = username;
+      localStorage.removeItem("username")
+      window.location.href = "login.html"
+    })
+
+    // Parāda lietotājvārdu ekrāna augšējā labajā stūrī
+    document.getElementById("usernameDisplay").textContent = username
   </script>
 
+  <!-- Lietotāja info bloks -->
   <div id="userDisplay" style="
-  position: fixed;
-  top: 10px;
-  right: 15px;
-  font-size: 18px;
-  color: #00eaff;
-    z-index: 9999;
-"><span id="usernameDisplay"></span>
+      position: fixed;
+      top: 10px;
+      right: 15px;
+      font-size: 18px;
+      color: #00eaff;
+      z-index: 9999;
+  ">
+    <span id="usernameDisplay"></span>
     <br>
-  <button id="logoutBtn" style="display: inline-block;
-  width: 100px;
-  fontsize: 15px;
-  border-radius: 4px; 
-  letter-spacing: 1px;">Logout</button>
+    <button id="logoutBtn" style="
+      display: inline-block;
+      width: 100px;
+      font-size: 15px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    ">
+      Logout
+    </button>
   </div>
 
-  
 </body>
 </html>
