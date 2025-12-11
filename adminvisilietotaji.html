@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<!-- Username shown in top-right -->
+<!-- Parāda lietotājvārdu augšējā labajā stūrī -->
 <div id="userDisplay" style="
   position: fixed;
   top: 10px;
@@ -19,6 +19,7 @@
 <p style="color:red;">Tikai administratoram!</p>
 <br>
 
+<!-- Tabula visiem lietotājiem -->
 <table border="1" id="users">
   <tr>
     <th>id</th>
@@ -34,127 +35,130 @@
 <button onclick="window.location.href='index.html'">Atpakaļ!</button>
 
 <script>
-// Show logged-in username
-document.getElementById("userDisplay").innerText = localStorage.getItem("username");
+// Parāda kurš lietotājs ir ielogojies
+document.getElementById("userDisplay").innerText = localStorage.getItem("username")
 </script>
 
 <script type="module">
-import { supabase } from './supabase.js';
+import { supabase } from './supabase.js'
 
-// 🔐 ADMIN CHECK
-const currentUser = localStorage.getItem("username");
+// Pārbauda vai lietotājs ir admin
+const currentUser = localStorage.getItem("username")
 if (currentUser !== "admin") {
-  alert("Access denied! Only admin can view this page.");
-  window.location.href = "index.html";
+  alert("Access denied! Only admin can view this page.")
+  window.location.href = "index.html"
 }
 
-// 🔧 MAIN FUNCTION: Load all users
+// Ielādē visus lietotājus no supabase
 async function loadUsers() {
   const { data, error } = await supabase
     .from('users')
-    .select('*');
+    .select('*')
 
+  // Ja Supabase atgriež kļūdu
   if (error) {
-    alert("Error: " + error.message);
-    return;
+    alert("Error: " + error.message)
+    return
   }
 
-  const table = document.getElementById("users");
+  const table = document.getElementById("users")
 
+  // Ievieto katru lietotāju tabulā
   data.forEach(row => {
-    const newRow = table.insertRow();
+    const newRow = table.insertRow()
 
     // ID
-    newRow.insertCell(0).innerText = row.id;
+    newRow.insertCell(0).innerText = row.id
 
-    // Username
-    newRow.insertCell(1).innerText = row.username;
+    // Lietotājvārds
+    newRow.insertCell(1).innerText = row.username
 
-    // Password (hidden)
-    const passCell = newRow.insertCell(2);
-    passCell.innerText = "*****";
+    // Parole paslēpta
+    const passCell = newRow.insertCell(2)
+    passCell.innerText = "*****"
 
-    // SHOW / HIDE PASSWORD BUTTON
-    const showCell = newRow.insertCell(3);
-    const showBtn = document.createElement("button");
-    showBtn.innerText = "Show";
-    showBtn.style.width = "80px";
+    // Parādīt/slēpt paroli
+    const showCell = newRow.insertCell(3)
+    const showBtn = document.createElement("button")
+    showBtn.innerText = "Show"
+    showBtn.style.width = "80px"
 
-    let showing = false;
+    let showing = false
 
     showBtn.addEventListener("click", () => {
       if (!showing) {
-        passCell.innerText = row.password;
-        showBtn.innerText = "Hide";
-        showing = true;
+        passCell.innerText = row.password
+        showBtn.innerText = "Hide"
+        showing = true
       } else {
-        passCell.innerText = "*****";
-        showBtn.innerText = "Show";
-        showing = false;
+        passCell.innerText = "*****"
+        showBtn.innerText = "Show"
+        showing = false
       }
-    });
+    })
 
-    showCell.appendChild(showBtn);
+    showCell.appendChild(showBtn)
 
-    // CHANGE PASSWORD BUTTON
-    const changePassCell = newRow.insertCell(4);
-    const changeBtn = document.createElement("button");
-    changeBtn.innerText = "Mainīt";
-    changeBtn.style.width = "80px";
-    changeBtn.style.color = "blue";
+    // Paroles maiņas poga
+    const changePassCell = newRow.insertCell(4)
+    const changeBtn = document.createElement("button")
+    changeBtn.innerText = "Mainīt"
+    changeBtn.style.width = "80px"
+    changeBtn.style.color = "blue"
 
     changeBtn.addEventListener("click", async () => {
-      const newPass = prompt("Ievadi jauno paroli:");
+      const newPass = prompt("Ievadi jauno paroli:")
 
       if (!newPass || newPass.trim() === "") {
-        alert("Parole nevar būt tukša!");
-        return;
+        alert("Parole nevar būt tukša!")
+        return
       }
 
       const { error } = await supabase
         .from("users")
         .update({ password: newPass })
-        .eq("id", row.id);
+        .eq("id", row.id)
 
       if (error) {
-        alert("Kļūda mainot paroli: " + error.message);
-        return;
+        alert("Kļūda mainot paroli: " + error.message)
+        return
       }
 
-      // Update locally
-      row.password = newPass;
-      passCell.innerText = "*****";
-      showBtn.innerText = "Show";
-      showing = false;
+      // Atjauno lokāli
+      row.password = newPass
+      passCell.innerText = "*****"
+      showBtn.innerText = "Show"
+      showing = false
 
-      alert("Parole veiksmīgi nomainīta!");
-    });
+      alert("Parole veiksmīgi nomainīta!")
+    })
 
-    changePassCell.appendChild(changeBtn);
+    changePassCell.appendChild(changeBtn)
 
-    // DELETE USER BUTTON
-    const deleteCell = newRow.insertCell(5);
-    const deleteBtn = document.createElement("button");
-    deleteBtn.innerText = "X";
-    deleteBtn.style.width = "80px";
-    deleteBtn.style.color = "red";
+    // Dzēšanas poga
+    const deleteCell = newRow.insertCell(5)
+    const deleteBtn = document.createElement("button")
+    deleteBtn.innerText = "X"
+    deleteBtn.style.width = "80px"
+    deleteBtn.style.color = "red"
 
     deleteBtn.addEventListener("click", async () => {
-      if (!confirm("Tiešām dzēst šo lietotāju?")) return;
+      if (!confirm("Tiešām dzēst šo lietotāju?")) return
 
       await supabase
         .from("users")
         .delete()
-        .eq("id", row.id);
+        .eq("id", row.id)
 
-      newRow.remove();
-    });
+      newRow.remove()
+    })
 
-    deleteCell.appendChild(deleteBtn);
-  });
+    deleteCell.appendChild(deleteBtn)
+  })
 }
 
-loadUsers();
+// Izsauc funkciju lai ielādētu lietotājus
+loadUsers()
 </script>
 
 </body>
