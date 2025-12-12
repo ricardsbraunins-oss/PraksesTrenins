@@ -1,88 +1,191 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Snake Game</title>
-<style>
-body {
-    background: #111;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-}
-canvas {
-    background: #000;
-    border: 2px solid #0f0;
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>2D Cube Platformer (Mario-like)</title>
+  <style>
+    html, body { height: 100%; margin: 0; background:#111; }
+    canvas { display:block; margin:0 auto; background:#0b0f14; image-rendering: pixelated; }
+    .hint {
+      position: fixed; left: 12px; top: 12px; color: #cfd8dc;
+      font: 14px/1.3 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: rgba(0,0,0,.35); padding: 10px 12px; border-radius: 10px;
+    }
+    b{ color:#fff; }
+  </style>
 </head>
 <body>
+  <div class="hint">
+    Move: <b>A/D</b> or <b>←/→</b> • Jump: <b>W</b>/<b>Space</b>/<b>↑</b> • Reset: <b>R</b>
+  </div>
+  <canvas id="c" width="960" height="540"></canvas>
 
-<canvas id="game" width="400" height="400"></canvas>
+  <script>
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d");
 
-<script>
-const canvas = document.getElementById("game")
-const ctx = canvas.getContext("2d")
+    const keys = new Set();
+    addEventListener("keydown", (e) => { keys.add(e.code); if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code)) e.preventDefault(); });
+    addEventListener("keyup", (e) => keys.delete(e.code));
 
-const grid = 20
-let snake = [{x: 200, y: 200}]
-let food = randomFood()
-let dx = grid
-let dy = 0
-let score = 0
+    const world = {
+      gravity: 2600,
+      tile: 48,
+      frictionGround: 0.86,
+      frictionAir: 0.98
+    };
 
-function randomFood() {
-    return {
-        x: Math.floor(Math.random() * 20) * grid,
-        y: Math.floor(Math.random() * 20) * grid
+    const level = [
+      { x: 0, y: 492, w: 2000, h: 48 },
+      { x: 300, y: 400, w: 220, h: 28 },
+      { x: 620, y: 340, w: 260, h: 28 },
+      { x: 980, y: 430, w: 220, h: 28 },
+      { x: 1280, y: 360, w: 260, h: 28 },
+      { x: 1600, y: 300, w: 260, h: 28 },
+
+      { x: 520, y: 452, w: 48, h: 40 },
+      { x: 1500, y: 452, w: 48, h: 40 },
+    ];
+
+    const player = {
+      x: 140,
+      y: 200,
+      w: 36,
+      h: 36,
+      vx: 0,
+      vy: 0,
+      onGround: false,
+      coyote: 0,
+      jumpBuffer: 0
+    };
+
+    function reset() {
+      player.x = 140; player.y = 200;
+      player.vx = 0; player.vy = 0;
+      player.onGround = false;
+      player.coyote = 0;
+      player.jumpBuffer = 0;
+      cam.x = 0; cam.y = 0;
     }
-}
 
-function gameLoop() {
-    setTimeout(() => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+    const cam = { x: 0, y: 0 };
 
-        const head = {x: snake[0].x + dx, y: snake[0].y + dy}
+    function aabb(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
 
-        if (
-            head.x < 0 || head.x >= canvas.width ||
-            head.y < 0 || head.y >= canvas.height ||
-            snake.some(s => s.x === head.x && s.y === head.y)
-        ) {
-            alert("Game Over! Score: " + score)
-            location.reload()
-        }
+    function resolveX(p, box) {
+      if (!aabb(p, box)) return;
+      if (p.vx > 0) p.x = box.x - p.w;
+      else if (p.vx < 0) p.x = box.x + box.w;
+      p.vx = 0;
+    }
 
-        snake.unshift(head)
+    function resolveY(p, box) {
+      if (!aabb(p, box)) return;
+      if (p.vy > 0) {
+        p.y = box.y - p.h;
+        p.vy = 0;
+        p.onGround = true;
+        p.coyote = 0.11;
+      } else if (p.vy < 0) {
+        p.y = box.y + box.h;
+        p.vy = 0;
+      }
+    }
 
-        if (head.x === food.x && head.y === food.y) {
-            score++
-            food = randomFood()
-        } else {
-            snake.pop()
-        }
+    function update(dt) {
+      if (keys.has("KeyR")) reset();
 
-        ctx.fillStyle = "red"
-        ctx.fillRect(food.x, food.y, grid, grid)
+      const left  = keys.has("ArrowLeft") || keys.has("KeyA");
+      const right = keys.has("ArrowRight") || keys.has("KeyD");
+      const jump  = keys.has("ArrowUp") || keys.has("KeyW") || keys.has("Space");
 
-        ctx.fillStyle = "lime"
-        snake.forEach(s => ctx.fillRect(s.x, s.y, grid, grid))
+      const accel = player.onGround ? 2200 : 1600;
+      const maxSpeed = player.onGround ? 520 : 460;
 
-        gameLoop()
-    }, 100)
-}
+      if (left)  player.vx -= accel * dt;
+      if (right) player.vx += accel * dt;
 
-document.addEventListener("keydown", e => {
-    if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -grid }
-    if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = grid }
-    if (e.key === "ArrowLeft" && dx === 0) { dx = -grid; dy = 0 }
-    if (e.key === "ArrowRight" && dx === 0) { dx = grid; dy = 0 }
-})
+      if (!left && !right) {
+        player.vx *= player.onGround ? world.frictionGround : world.frictionAir;
+        if (Math.abs(player.vx) < 10) player.vx = 0;
+      }
 
-gameLoop()
-</script>
+      player.vx = Math.max(-maxSpeed, Math.min(maxSpeed, player.vx));
 
+      if (jump) player.jumpBuffer = 0.12;
+      else player.jumpBuffer = Math.max(0, player.jumpBuffer - dt);
+
+      player.coyote = Math.max(0, player.coyote - dt);
+
+      if (player.jumpBuffer > 0 && (player.onGround || player.coyote > 0)) {
+        player.vy = -820;
+        player.onGround = false;
+        player.coyote = 0;
+        player.jumpBuffer = 0;
+      }
+
+      player.vy += world.gravity * dt;
+      player.vy = Math.min(player.vy, 1400);
+
+      player.onGround = false;
+
+      player.x += player.vx * dt;
+      for (const box of level) resolveX(player, box);
+
+      player.y += player.vy * dt;
+      for (const box of level) resolveY(player, box);
+
+      const targetX = player.x + player.w/2 - canvas.width/2;
+      cam.x += (targetX - cam.x) * Math.min(1, 10 * dt);
+      cam.x = Math.max(0, Math.min(cam.x, 2000 - canvas.width));
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#0b1b2a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.translate(-Math.round(cam.x), -Math.round(cam.y));
+
+      ctx.fillStyle = "#1e293b";
+      for (const b of level) ctx.fillRect(b.x, b.y, b.w, b.h);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 2;
+      for (const b of level) ctx.strokeRect(b.x + 1, b.y + 1, b.w - 2, b.h - 2);
+
+      ctx.fillStyle = "#22c55e";
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+
+      ctx.fillStyle = "rgba(0,0,0,0.25)";
+      ctx.fillRect(player.x + 4, player.y + player.h - 10, player.w - 8, 8);
+
+      ctx.restore();
+
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText(`vx: ${player.vx.toFixed(0)}  vy: ${player.vy.toFixed(0)}  onGround: ${player.onGround}`, 12, canvas.height - 14);
+    }
+
+    let last = performance.now();
+    function loop(t) {
+      let dt = (t - last) / 1000;
+      last = t;
+
+      dt = Math.min(dt, 1/30);
+
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    reset();
+    requestAnimationFrame(loop);
+  </script>
 </body>
 </html>
