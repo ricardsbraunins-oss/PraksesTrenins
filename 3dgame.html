@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Pure JS 3D Engine</title>
+    <title>3D Fixed Engine</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #111; color: #0f0; font-family: monospace; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
         canvas { display: block; }
-        #ui { position: absolute; top: 10px; left: 10px; pointer-events: none; }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.5); padding: 10px; pointer-events: none; }
     </style>
 </head>
 <body>
     <div id="ui">
-        WASD to Move | Mouse to Look<br>
-        Physics: Custom Gravity & Collision
+        <b>Controls:</b> WASD to Move | Space to Jump | Mouse to Look<br>
+        <span id="coords"></span>
     </div>
     <canvas id="gameCanvas"></canvas>
 
@@ -19,21 +19,22 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// --- Configuration ---
 let width, height;
-const fov = 400; // Field of view (focal length)
-const gravity = 0.01;
-const friction = 0.95;
+const fov = 600; 
+const roomSize = 1000; // Much bigger room
+const gravity = 0.4;
+const friction = 0.85;
+const jumpForce = 12;
 
-// Player State
 const player = {
-    x: 0, y: 0, z: -200,
+    x: 0, y: 0, z: 0,
     yaw: 0, pitch: 0,
-    vx: 0, vy: 0, vz: 0
+    vx: 0, vy: 0, vz: 0,
+    height: 50
 };
 
-// The Room (A cube defined by 8 vertices)
-const roomSize = 300;
+// Define 6 faces of the box for coloring
+// Each face: [vertex indices], color
 const vertices = [
     {x: -roomSize, y: -roomSize, z: -roomSize}, {x: roomSize, y: -roomSize, z: -roomSize},
     {x: roomSize, y:  roomSize, z: -roomSize}, {x: -roomSize, y:  roomSize, z: -roomSize},
@@ -41,124 +42,123 @@ const vertices = [
     {x: roomSize, y:  roomSize, z:  roomSize}, {x: -roomSize, y:  roomSize, z:  roomSize}
 ];
 
-// Lines connecting the vertices to form a box
-const edges = [
-    [0,1], [1,2], [2,3], [3,0], // Back face
-    [4,5], [5,6], [6,7], [7,4], // Front face
-    [0,4], [1,5], [2,6], [3,7]  // Connecting lines
+const faces = [
+    { v: [0, 1, 2, 3], color: '#444' }, // Back
+    { v: [4, 5, 6, 7], color: '#555' }, // Front
+    { v: [0, 4, 7, 3], color: '#333' }, // Left
+    { v: [1, 5, 6, 2], color: '#333' }, // Right
+    { v: [0, 1, 5, 4], color: '#222' }, // Ceiling
+    { v: [3, 2, 6, 7], color: '#666' }  // Floor
 ];
 
-// --- Input Handling ---
 const keys = {};
-window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
-window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
+window.onkeydown = (e) => keys[e.code] = true;
+window.onkeyup = (e) => keys[e.code] = false;
 
 canvas.onclick = () => canvas.requestPointerLock();
 window.onmousemove = (e) => {
     if (document.pointerLockElement === canvas) {
-        player.yaw += e.movementX * 0.005;
-        player.pitch -= e.movementY * 0.005;
-        player.pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, player.pitch));
+        player.yaw += e.movementX * 0.003;
+        player.pitch -= e.movementY * 0.003;
+        // Clamp pitch to prevent backflipping
+        player.pitch = Math.max(-Math.PI/2.1, Math.min(Math.PI/2.1, player.pitch));
     }
 };
 
-function resize() {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-}
-window.onresize = resize;
-resize();
+function project(v) {
+    let dx = v.x - player.x;
+    let dy = v.y - (player.y - player.height); // Eye level
+    let dz = v.z - player.z;
 
-// --- 3D Projection Logic ---
-function project(vertex) {
-    // 1. Translate relative to player
-    let dx = vertex.x - player.x;
-    let dy = vertex.y - player.y;
-    let dz = vertex.z - player.z;
+    // Rotation Math
+    let cosY = Math.cos(player.yaw), sinY = Math.sin(player.yaw);
+    let cosX = Math.cos(player.pitch), sinX = Math.sin(player.pitch);
 
-    // 2. Rotate Y (Yaw)
-    let cosY = Math.cos(-player.yaw);
-    let sinY = Math.sin(-player.yaw);
-    let x1 = dx * cosY - dz * sinY;
-    let z1 = dx * sinY + dz * cosY;
+    let x = dx * cosY + dz * sinY;
+    let z = dz * cosY - dx * sinY;
+    let y = dy * cosX - z * sinX;
+    z = dy * sinX + z * cosX;
 
-    // 3. Rotate X (Pitch)
-    let cosX = Math.cos(-player.pitch);
-    let sinX = Math.sin(-player.pitch);
-    let y2 = dy * cosX - z1 * sinX;
-    let z2 = dy * sinX + z1 * cosX;
-
-    // 4. Project to 2D Screen
-    if (z2 <= 0) return null; // Clipping points behind player
-    const scale = fov / z2;
-    return {
-        x: width / 2 + x1 * scale,
-        y: height / 2 + y2 * scale
-    };
+    if (z < 1) return null; 
+    return { x: width/2 + (x * fov / z), y: height/2 + (y * fov / z), z: z };
 }
 
-// --- Game Loop ---
 function loop() {
-    // 1. Physics & Movement
-    let speed = 2;
-    if (keys['w']) {
+    // Movement Logic
+    let speed = 1.2;
+    if (keys['KeyW']) {
         player.vx += Math.sin(player.yaw) * speed;
         player.vz += Math.cos(player.yaw) * speed;
     }
-    if (keys['s']) {
+    if (keys['KeyS']) {
         player.vx -= Math.sin(player.yaw) * speed;
         player.vz -= Math.cos(player.yaw) * speed;
     }
-    
-    // Apply Velocity
+    if (keys['KeyA']) {
+        player.vx -= Math.cos(player.yaw) * speed;
+        player.vz += Math.sin(player.yaw) * speed;
+    }
+    if (keys['KeyD']) {
+        player.vx += Math.cos(player.yaw) * speed;
+        player.vz -= Math.sin(player.yaw) * speed;
+    }
+    if (keys['Space'] && player.y >= roomSize - 1) {
+        player.vy = -jumpForce;
+    }
+
+    // Apply Physics
     player.x += player.vx;
     player.y += player.vy;
     player.z += player.vz;
-
-    // Gravity
     player.vy += gravity;
-
-    // Friction
     player.vx *= friction;
-    player.vy *= friction;
     player.vz *= friction;
 
-    // 2. Simple Collisions (Boundaries)
-    const margin = 20;
-    if (Math.abs(player.x) > roomSize - margin) {
-        player.x = Math.sign(player.x) * (roomSize - margin);
-        player.vx = 0;
-    }
-    if (Math.abs(player.y) > roomSize - margin) {
-        player.y = Math.sign(player.y) * (roomSize - margin);
-        player.vy = 0;
-    }
-    if (Math.abs(player.z) > roomSize - margin) {
-        player.z = Math.sign(player.z) * (roomSize - margin);
-        player.vz = 0;
-    }
+    // Collisions
+    const bounds = roomSize - 20;
+    if (Math.abs(player.x) > bounds) player.x = Math.sign(player.x) * bounds;
+    if (Math.abs(player.z) > bounds) player.z = Math.sign(player.z) * bounds;
+    if (player.y > roomSize) { player.y = roomSize; player.vy = 0; }
+    if (player.y < -roomSize) { player.y = -roomSize; player.vy = 0; }
 
-    // 3. Rendering
-    ctx.fillStyle = '#111';
+    // Render
+    ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, width, height);
-    ctx.strokeStyle = '#0f0';
-    ctx.lineWidth = 2;
 
-    edges.forEach(edge => {
-        const p1 = project(vertices[edge[0]]);
-        const p2 = project(vertices[edge[1]]);
+    // Sort faces by distance (Painter's Algorithm)
+    const sortedFaces = faces.map(face => {
+        let sumZ = 0;
+        face.v.forEach(idx => {
+            const p = project(vertices[idx]);
+            sumZ += p ? p.z : 5000;
+        });
+        return { ...face, avgZ: sumZ / 4 };
+    }).sort((a, b) => b.avgZ - a.avgZ);
 
-        if (p1 && p2) {
+    sortedFaces.forEach(face => {
+        const points = face.v.map(idx => project(vertices[idx]));
+        if (points.every(p => p !== null)) {
+            ctx.fillStyle = face.color;
             ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
+            ctx.moveTo(points[0].x, points[0].y);
+            for(let i=1; i<points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = "rgba(255,255,255,0.1)";
             ctx.stroke();
         }
     });
 
+    document.getElementById('coords').innerText = `Pos: ${Math.round(player.x)}, ${Math.round(player.y)}, ${Math.round(player.z)}`;
     requestAnimationFrame(loop);
 }
 
+function resize() { 
+    width = canvas.width = window.innerWidth; 
+    height = canvas.height = window.innerHeight; 
+}
+window.onresize = resize;
+resize();
 loop();
 </script>
 </body>
