@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pure JS 3D Engine</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #111; color: #0f0; font-family: monospace; }
+        canvas { display: block; }
+        #ui { position: absolute; top: 10px; left: 10px; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        WASD to Move | Mouse to Look<br>
+        Physics: Custom Gravity & Collision
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// --- Configuration ---
+let width, height;
+const fov = 400; // Field of view (focal length)
+const gravity = 0.01;
+const friction = 0.95;
+
+// Player State
+const player = {
+    x: 0, y: 0, z: -200,
+    yaw: 0, pitch: 0,
+    vx: 0, vy: 0, vz: 0
+};
+
+// The Room (A cube defined by 8 vertices)
+const roomSize = 300;
+const vertices = [
+    {x: -roomSize, y: -roomSize, z: -roomSize}, {x: roomSize, y: -roomSize, z: -roomSize},
+    {x: roomSize, y:  roomSize, z: -roomSize}, {x: -roomSize, y:  roomSize, z: -roomSize},
+    {x: -roomSize, y: -roomSize, z:  roomSize}, {x: roomSize, y: -roomSize, z:  roomSize},
+    {x: roomSize, y:  roomSize, z:  roomSize}, {x: -roomSize, y:  roomSize, z:  roomSize}
+];
+
+// Lines connecting the vertices to form a box
+const edges = [
+    [0,1], [1,2], [2,3], [3,0], // Back face
+    [4,5], [5,6], [6,7], [7,4], // Front face
+    [0,4], [1,5], [2,6], [3,7]  // Connecting lines
+];
+
+// --- Input Handling ---
+const keys = {};
+window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
+window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
+
+canvas.onclick = () => canvas.requestPointerLock();
+window.onmousemove = (e) => {
+    if (document.pointerLockElement === canvas) {
+        player.yaw += e.movementX * 0.005;
+        player.pitch -= e.movementY * 0.005;
+        player.pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, player.pitch));
+    }
+};
+
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.onresize = resize;
+resize();
+
+// --- 3D Projection Logic ---
+function project(vertex) {
+    // 1. Translate relative to player
+    let dx = vertex.x - player.x;
+    let dy = vertex.y - player.y;
+    let dz = vertex.z - player.z;
+
+    // 2. Rotate Y (Yaw)
+    let cosY = Math.cos(-player.yaw);
+    let sinY = Math.sin(-player.yaw);
+    let x1 = dx * cosY - dz * sinY;
+    let z1 = dx * sinY + dz * cosY;
+
+    // 3. Rotate X (Pitch)
+    let cosX = Math.cos(-player.pitch);
+    let sinX = Math.sin(-player.pitch);
+    let y2 = dy * cosX - z1 * sinX;
+    let z2 = dy * sinX + z1 * cosX;
+
+    // 4. Project to 2D Screen
+    if (z2 <= 0) return null; // Clipping points behind player
+    const scale = fov / z2;
+    return {
+        x: width / 2 + x1 * scale,
+        y: height / 2 + y2 * scale
+    };
+}
+
+// --- Game Loop ---
+function loop() {
+    // 1. Physics & Movement
+    let speed = 2;
+    if (keys['w']) {
+        player.vx += Math.sin(player.yaw) * speed;
+        player.vz += Math.cos(player.yaw) * speed;
+    }
+    if (keys['s']) {
+        player.vx -= Math.sin(player.yaw) * speed;
+        player.vz -= Math.cos(player.yaw) * speed;
+    }
+    
+    // Apply Velocity
+    player.x += player.vx;
+    player.y += player.vy;
+    player.z += player.vz;
+
+    // Gravity
+    player.vy += gravity;
+
+    // Friction
+    player.vx *= friction;
+    player.vy *= friction;
+    player.vz *= friction;
+
+    // 2. Simple Collisions (Boundaries)
+    const margin = 20;
+    if (Math.abs(player.x) > roomSize - margin) {
+        player.x = Math.sign(player.x) * (roomSize - margin);
+        player.vx = 0;
+    }
+    if (Math.abs(player.y) > roomSize - margin) {
+        player.y = Math.sign(player.y) * (roomSize - margin);
+        player.vy = 0;
+    }
+    if (Math.abs(player.z) > roomSize - margin) {
+        player.z = Math.sign(player.z) * (roomSize - margin);
+        player.vz = 0;
+    }
+
+    // 3. Rendering
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, width, height);
+    ctx.strokeStyle = '#0f0';
+    ctx.lineWidth = 2;
+
+    edges.forEach(edge => {
+        const p1 = project(vertices[edge[0]]);
+        const p2 = project(vertices[edge[1]]);
+
+        if (p1 && p2) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+        }
+    });
+
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
