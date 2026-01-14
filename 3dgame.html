@@ -1,165 +1,271 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>3D Fixed Engine</title>
+    <title>JS Tetris</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
-        canvas { display: block; }
-        #ui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.5); padding: 10px; pointer-events: none; }
+        body {
+            background: #202028;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #score {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        canvas {
+            border: solid 2px #fff;
+            background-color: #000;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
-    <div id="ui">
-        <b>Controls:</b> WASD to Move | Space to Jump | Mouse to Look<br>
-        <span id="coords"></span>
-    </div>
-    <canvas id="gameCanvas"></canvas>
+
+    <div id="score">Score: 0</div>
+    <canvas id="tetris" width="240" height="400"></canvas>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById('tetris');
+const context = canvas.getContext('2d');
 
-let width, height;
-const fov = 600; 
-const roomSize = 1000; // Much bigger room
-const gravity = 0.4;
-const friction = 0.85;
-const jumpForce = 12;
+context.scale(20, 20);
+
+// 1. Line Clearing Logic
+function arenaSweep() {
+    let rowCount = 1;
+    outer: for (let y = arena.length - 1; y > 0; --y) {
+        for (let x = 0; x < arena[y].length; ++x) {
+            if (arena[y][x] === 0) {
+                continue outer;
+            }
+        }
+        const row = arena.splice(y, 1)[0].fill(0);
+        arena.unshift(row);
+        ++y;
+
+        player.score += rowCount * 10;
+        rowCount *= 2;
+    }
+    updateScore();
+}
+
+// 2. Collision Detection
+function collide(arena, player) {
+    const [m, o] = [player.matrix, player.pos];
+    for (let y = 0; y < m.length; ++y) {
+        for (let x = 0; x < m[y].length; ++x) {
+            if (m[y][x] !== 0 &&
+               (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// 3. Create the Matrix (Grid)
+function createMatrix(w, h) {
+    const matrix = [];
+    while (h--) {
+        matrix.push(new Array(w).fill(0));
+    }
+    return matrix;
+}
+
+// 4. Define the Tetrominoes
+function createPiece(type) {
+    if (type === 'I') {
+        return [
+            [0, 1, 0, 0],
+            [0, 1, 0, 0],
+            [0, 1, 0, 0],
+            [0, 1, 0, 0],
+        ];
+    } else if (type === 'L') {
+        return [
+            [0, 2, 0],
+            [0, 2, 0],
+            [0, 2, 2],
+        ];
+    } else if (type === 'J') {
+        return [
+            [0, 3, 0],
+            [0, 3, 0],
+            [3, 3, 0],
+        ];
+    } else if (type === 'O') {
+        return [
+            [4, 4],
+            [4, 4],
+        ];
+    } else if (type === 'Z') {
+        return [
+            [5, 5, 0],
+            [0, 5, 5],
+            [0, 0, 0],
+        ];
+    } else if (type === 'S') {
+        return [
+            [0, 6, 6],
+            [6, 6, 0],
+            [0, 0, 0],
+        ];
+    } else if (type === 'T') {
+        return [
+            [0, 7, 0],
+            [7, 7, 7],
+            [0, 0, 0],
+        ];
+    }
+}
+
+// 5. Drawing functions
+function draw() {
+    context.fillStyle = '#000';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    drawMatrix(arena, {x: 0, y: 0});
+    drawMatrix(player.matrix, player.pos);
+}
+
+function drawMatrix(matrix, offset) {
+    matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) {
+                context.fillStyle = colors[value];
+                context.fillRect(x + offset.x, y + offset.y, 1, 1);
+            }
+        });
+    });
+}
+
+// 6. Merging and Rotation
+function merge(arena, player) {
+    player.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) {
+                arena[y + player.pos.y][x + player.pos.x] = value;
+            }
+        });
+    });
+}
+
+function rotate(matrix, dir) {
+    for (let y = 0; y < matrix.length; ++y) {
+        for (let x = 0; x < y; ++x) {
+            [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+        }
+    }
+    if (dir > 0) {
+        matrix.forEach(row => row.reverse());
+    } else {
+        matrix.reverse();
+    }
+}
+
+// 7. Movement and Drop
+function playerDrop() {
+    player.pos.y++;
+    if (collide(arena, player)) {
+        player.pos.y--;
+        merge(arena, player);
+        playerReset();
+        arenaSweep();
+    }
+    dropCounter = 0;
+}
+
+function playerMove(dir) {
+    player.pos.x += dir;
+    if (collide(arena, player)) {
+        player.pos.x -= dir;
+    }
+}
+
+function playerReset() {
+    const pieces = 'ILJOTSZ';
+    player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
+    player.pos.y = 0;
+    player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+    if (collide(arena, player)) {
+        arena.forEach(row => row.fill(0));
+        player.score = 0;
+        updateScore();
+    }
+}
+
+function playerRotate(dir) {
+    const pos = player.pos.x;
+    let offset = 1;
+    rotate(player.matrix, dir);
+    while (collide(arena, player)) {
+        player.pos.x += offset;
+        offset = -(offset + (offset > 0 ? 1 : -1));
+        if (offset > player.matrix[0].length) {
+            rotate(player.matrix, -dir);
+            player.pos.x = pos;
+            return;
+        }
+    }
+}
+
+let dropCounter = 0;
+let dropInterval = 1000;
+let lastTime = 0;
+
+function update(time = 0) {
+    const deltaTime = time - lastTime;
+    lastTime = time;
+
+    dropCounter += deltaTime;
+    if (dropCounter > dropInterval) {
+        playerDrop();
+    }
+
+    draw();
+    requestAnimationFrame(update);
+}
+
+function updateScore() {
+    document.getElementById('score').innerText = "Score: " + player.score;
+}
+
+const colors = [
+    null, '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF',
+];
+
+const arena = createMatrix(12, 20);
 
 const player = {
-    x: 0, y: 0, z: 0,
-    yaw: 0, pitch: 0,
-    vx: 0, vy: 0, vz: 0,
-    height: 50
+    pos: {x: 0, y: 0},
+    matrix: null,
+    score: 0,
 };
 
-// Define 6 faces of the box for coloring
-// Each face: [vertex indices], color
-const vertices = [
-    {x: -roomSize, y: -roomSize, z: -roomSize}, {x: roomSize, y: -roomSize, z: -roomSize},
-    {x: roomSize, y:  roomSize, z: -roomSize}, {x: -roomSize, y:  roomSize, z: -roomSize},
-    {x: -roomSize, y: -roomSize, z:  roomSize}, {x: roomSize, y: -roomSize, z:  roomSize},
-    {x: roomSize, y:  roomSize, z:  roomSize}, {x: -roomSize, y:  roomSize, z:  roomSize}
-];
-
-const faces = [
-    { v: [0, 1, 2, 3], color: '#444' }, // Back
-    { v: [4, 5, 6, 7], color: '#555' }, // Front
-    { v: [0, 4, 7, 3], color: '#333' }, // Left
-    { v: [1, 5, 6, 2], color: '#333' }, // Right
-    { v: [0, 1, 5, 4], color: '#222' }, // Ceiling
-    { v: [3, 2, 6, 7], color: '#666' }  // Floor
-];
-
-const keys = {};
-window.onkeydown = (e) => keys[e.code] = true;
-window.onkeyup = (e) => keys[e.code] = false;
-
-canvas.onclick = () => canvas.requestPointerLock();
-window.onmousemove = (e) => {
-    if (document.pointerLockElement === canvas) {
-        player.yaw += e.movementX * 0.003;
-        player.pitch -= e.movementY * 0.003;
-        // Clamp pitch to prevent backflipping
-        player.pitch = Math.max(-Math.PI/2.1, Math.min(Math.PI/2.1, player.pitch));
+// Controls
+document.addEventListener('keydown', event => {
+    if (event.keyCode === 37) { // Left Arrow
+        playerMove(-1);
+    } else if (event.keyCode === 39) { // Right Arrow
+        playerMove(1);
+    } else if (event.keyCode === 40) { // Down Arrow
+        playerDrop();
+    } else if (event.keyCode === 81) { // Q Key
+        playerRotate(-1);
+    } else if (event.keyCode === 87) { // W Key
+        playerRotate(1);
     }
-};
+});
 
-function project(v) {
-    let dx = v.x - player.x;
-    let dy = v.y - (player.y - player.height); // Eye level
-    let dz = v.z - player.z;
-
-    // Rotation Math
-    let cosY = Math.cos(player.yaw), sinY = Math.sin(player.yaw);
-    let cosX = Math.cos(player.pitch), sinX = Math.sin(player.pitch);
-
-    let x = dx * cosY + dz * sinY;
-    let z = dz * cosY - dx * sinY;
-    let y = dy * cosX - z * sinX;
-    z = dy * sinX + z * cosX;
-
-    if (z < 1) return null; 
-    return { x: width/2 + (x * fov / z), y: height/2 + (y * fov / z), z: z };
-}
-
-function loop() {
-    // Movement Logic
-    let speed = 1.2;
-    if (keys['KeyW']) {
-        player.vx += Math.sin(player.yaw) * speed;
-        player.vz += Math.cos(player.yaw) * speed;
-    }
-    if (keys['KeyS']) {
-        player.vx -= Math.sin(player.yaw) * speed;
-        player.vz -= Math.cos(player.yaw) * speed;
-    }
-    if (keys['KeyA']) {
-        player.vx -= Math.cos(player.yaw) * speed;
-        player.vz += Math.sin(player.yaw) * speed;
-    }
-    if (keys['KeyD']) {
-        player.vx += Math.cos(player.yaw) * speed;
-        player.vz -= Math.sin(player.yaw) * speed;
-    }
-    if (keys['Space'] && player.y >= roomSize - 1) {
-        player.vy = -jumpForce;
-    }
-
-    // Apply Physics
-    player.x += player.vx;
-    player.y += player.vy;
-    player.z += player.vz;
-    player.vy += gravity;
-    player.vx *= friction;
-    player.vz *= friction;
-
-    // Collisions
-    const bounds = roomSize - 20;
-    if (Math.abs(player.x) > bounds) player.x = Math.sign(player.x) * bounds;
-    if (Math.abs(player.z) > bounds) player.z = Math.sign(player.z) * bounds;
-    if (player.y > roomSize) { player.y = roomSize; player.vy = 0; }
-    if (player.y < -roomSize) { player.y = -roomSize; player.vy = 0; }
-
-    // Render
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, width, height);
-
-    // Sort faces by distance (Painter's Algorithm)
-    const sortedFaces = faces.map(face => {
-        let sumZ = 0;
-        face.v.forEach(idx => {
-            const p = project(vertices[idx]);
-            sumZ += p ? p.z : 5000;
-        });
-        return { ...face, avgZ: sumZ / 4 };
-    }).sort((a, b) => b.avgZ - a.avgZ);
-
-    sortedFaces.forEach(face => {
-        const points = face.v.map(idx => project(vertices[idx]));
-        if (points.every(p => p !== null)) {
-            ctx.fillStyle = face.color;
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-            for(let i=1; i<points.length; i++) ctx.lineTo(points[i].x, points[i].y);
-            ctx.closePath();
-            ctx.fill();
-            ctx.strokeStyle = "rgba(255,255,255,0.1)";
-            ctx.stroke();
-        }
-    });
-
-    document.getElementById('coords').innerText = `Pos: ${Math.round(player.x)}, ${Math.round(player.y)}, ${Math.round(player.z)}`;
-    requestAnimationFrame(loop);
-}
-
-function resize() { 
-    width = canvas.width = window.innerWidth; 
-    height = canvas.height = window.innerHeight; 
-}
-window.onresize = resize;
-resize();
-loop();
+playerReset();
+updateScore();
+update();
 </script>
 </body>
 </html>
