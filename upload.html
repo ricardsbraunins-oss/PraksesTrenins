@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FileUpload</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <h2>FileUpload</h2>
+
+  <!DOCTYPE html>
+<html>
+<head>
+  <title>Upload to Supabase</title>
+</head>
+<body>
+
+<input type="file" id="fileInput" />
+<button onclick="uploadFile()">Upload</button>
+
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
+
+
+  <!-- Pogas -->
+  <p id="message"></p>
+  <button id="loginBtn">Ienākt</button>
+  <br>
+  <p>Nav vel konta?</p>
+  <button id="signupBtn">Reģistrēties šeit!</button> 
+
+  
+
+  <script type="module">
+    import { supabase } from './supabase.js'
+
+
+
+    async function uploadFile() {
+  const fileInput = document.getElementById('fileInput')
+  const file = fileInput.files[0]
+
+  if (!file) {
+    alert('No file selected')
+    return
+  }
+
+  const filePath = `${Date.now()}_${file.name}`
+
+  const { data, error } = await supabase
+    .storage
+    .from('test')
+    .upload(filePath, file)
+
+  if (error) {
+    console.error(error)
+    alert('Upload failed')
+  } else {
+    alert('Upload successful!')
+    console.log(data)
+  }
+}
+  </script>
+
+</body>
+</html>
