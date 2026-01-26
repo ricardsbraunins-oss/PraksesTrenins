@@ -3,17 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <title>Supabase Upload</title>
-   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
+<h2>Upload file</h2>
 <input type="file" id="fileInput">
 <button id="uploadBtn">Upload</button>
+
+<hr>
+
+<h2>Files in bucket</h2>
+<ul id="fileList"></ul>
 
 <script type="module">
   import { supabase } from './supabase.js'
 
+  const bucket = 'test'
+  const fileList = document.getElementById('fileList')
+
   document.getElementById('uploadBtn').addEventListener('click', uploadFile)
+
+  loadFiles()
 
   async function uploadFile() {
     const fileInput = document.getElementById('fileInput')
@@ -28,13 +39,74 @@
 
     const { error } = await supabase
       .storage
-      .from('test')
+      .from(bucket)
       .upload(filePath, file)
 
     if (error) {
       alert(error.message)
     } else {
-      alert('Upload successful')
+      fileInput.value = ''
+      loadFiles()
+    }
+  }
+
+  async function loadFiles() {
+    fileList.innerHTML = ''
+
+    const { data, error } = await supabase
+      .storage
+      .from(bucket)
+      .list('', { limit: 100 })
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    if (data.length === 0) {
+      fileList.innerHTML = '<li>No files</li>'
+      return
+    }
+
+    data.forEach(file => {
+      const li = document.createElement('li')
+      li.textContent = file.name
+
+      const downloadBtn = document.createElement('button')
+      downloadBtn.textContent = 'Download'
+      downloadBtn.onclick = () => downloadFile(file.name)
+
+      const deleteBtn = document.createElement('button')
+      deleteBtn.textContent = 'Delete'
+      deleteBtn.onclick = () => deleteFile(file.name)
+
+      li.appendChild(downloadBtn)
+      li.appendChild(deleteBtn)
+      fileList.appendChild(li)
+    })
+  }
+
+  function downloadFile(path) {
+    const { data } = supabase
+      .storage
+      .from(bucket)
+      .getPublicUrl(path)
+
+    window.open(data.publicUrl, '_blank')
+  }
+
+  async function deleteFile(path) {
+    if (!confirm('Delete this file?')) return
+
+    const { error } = await supabase
+      .storage
+      .from(bucket)
+      .remove([path])
+
+    if (error) {
+      alert(error.message)
+    } else {
+      loadFiles()
     }
   }
 </script>
