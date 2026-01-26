@@ -1,54 +1,42 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>FileUpload</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Supabase Upload</title>
 </head>
 <body>
 
-  <h2>FileUpload</h2>
+<input type="file" id="fileInput">
+<button id="uploadBtn">Upload</button>
 
-  <!DOCTYPE html>
-<html>
-<head>
-  <title>Upload to Supabase</title>
-</head>
-<body>
+<script type="module">
+  import { supabase } from './supabase.js'
 
-<input type="file" id="fileInput" />
-<button onclick="uploadFile()">Upload</button>
+  document.getElementById('uploadBtn').addEventListener('click', uploadFile)
 
-  <script type="module">
-    import { supabase } from './supabase.js'
+  async function uploadFile() {
+    const fileInput = document.getElementById('fileInput')
+    const file = fileInput.files[0]
 
+    if (!file) {
+      alert('No file selected')
+      return
+    }
 
+    const filePath = `${Date.now()}_${file.name}`
 
-    async function uploadFile() {
-  const fileInput = document.getElementById('fileInput')
-  const file = fileInput.files[0]
+    const { error } = await supabase
+      .storage
+      .from('YOUR_BUCKET_NAME')
+      .upload(filePath, file)
 
-  if (!file) {
-    alert('No file selected')
-    return
+    if (error) {
+      alert(error.message)
+    } else {
+      alert('Upload successful')
+    }
   }
-
-  const filePath = `${Date.now()}_${file.name}`
-
-  const { data, error } = await supabase
-    .storage
-    .from('test')
-    .upload(filePath, file)
-
-  if (error) {
-    console.error(error)
-    alert('Upload failed')
-  } else {
-    alert('Upload successful!')
-    console.log(data)
-  }
-}
-  </script>
+</script>
 
 </body>
 </html>
