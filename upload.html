@@ -19,6 +19,15 @@
 <script type="module">
   import { supabase } from './supabase.js'
 
+   // Paņem lietotājvārdu
+    const username = localStorage.getItem("username")
+
+    // Pārbauda vai lietotājs ir admin
+    if (username !== "admin") {
+      alert("Access denied! Only admin can view this page.")
+      window.location.href = "index.html"
+    }
+  
   const bucket = 'test'
   const fileList = document.getElementById('fileList')
 
