@@ -27,7 +27,7 @@
 
     const { error } = await supabase
       .storage
-      .from('YOUR_BUCKET_NAME')
+      .from('test')
       .upload(filePath, file)
 
     if (error) {
