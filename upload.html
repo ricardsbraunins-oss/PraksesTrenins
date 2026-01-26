@@ -1,36 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Supabase Upload</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <title>Supabase Upload with Progress</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
 <h2>Upload file</h2>
-<input type="file" id="fileInput">
+<input type="file" id="fileInput" />
 <button id="uploadBtn">Upload</button>
 
-<hr>
+<div id="progressContainer" style="width:300px; margin-top:10px; display:none;">
+  <progress id="uploadProgress" value="0" max="100"></progress>
+  <span id="progressText">0%</span>
+</div>
+
+<hr />
 
 <h2>Files in bucket</h2>
 <ul id="fileList"></ul>
 
-<hr>
-  
+<hr />
+
 <button onclick="window.location.href='index.html'">Atpakaļ sākumā!</button>
+
 <script type="module">
-  import { supabase } from './supabase.js'
+  import { supabase, supabaseUrl, supabaseAnonKey } from './supabase.js'
 
-   // Paņem lietotājvārdu
-    const username = localStorage.getItem("username")
-
-    // Pārbauda vai lietotājs ir admin
-    if (username !== "admin") {
-      alert("Access denied! Only admin can view this page.")
-      window.location.href = "index.html"
-    }
-  
   const bucket = 'test'
   const fileList = document.getElementById('fileList')
 
@@ -49,26 +46,52 @@
 
     const filePath = `${Date.now()}_${file.name}`
 
-    const { error } = await supabase
-      .storage
-      .from(bucket)
-      .upload(filePath, file)
+    const progressContainer = document.getElementById('progressContainer')
+    const progressBar = document.getElementById('uploadProgress')
+    const progressText = document.getElementById('progressText')
 
-    if (error) {
-      alert(error.message)
-    } else {
-      fileInput.value = ''
-      loadFiles()
+    progressContainer.style.display = 'block'
+    progressBar.value = 0
+    progressText.textContent = '0%'
+
+    const url = `${supabaseUrl}/storage/v1/object/${bucket}/${encodeURIComponent(filePath)}`
+
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', url)
+
+    xhr.setRequestHeader('apikey', supabaseAnonKey)
+    xhr.setRequestHeader('Authorization', `Bearer ${supabaseAnonKey}`)
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100)
+        progressBar.value = percent
+        progressText.textContent = `${percent}%`
+      }
     }
+
+    xhr.onload = () => {
+      progressContainer.style.display = 'none'
+      if (xhr.status === 200 || xhr.status === 201) {
+        fileInput.value = ''
+        loadFiles()
+      } else {
+        alert('Upload failed: ' + xhr.statusText)
+      }
+    }
+
+    xhr.onerror = () => {
+      progressContainer.style.display = 'none'
+      alert('Upload error')
+    }
+
+    xhr.send(file)
   }
 
   async function loadFiles() {
     fileList.innerHTML = ''
 
-    const { data, error } = await supabase
-      .storage
-      .from(bucket)
-      .list('', { limit: 100 })
+    const { data, error } = await supabase.storage.from(bucket).list('', { limit: 100 })
 
     if (error) {
       alert(error.message)
@@ -99,27 +122,16 @@
   }
 
   function downloadFile(path) {
-    const { data } = supabase
-      .storage
-      .from(bucket)
-      .getPublicUrl(path)
-
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path)
     window.open(data.publicUrl, '_blank')
   }
 
   async function deleteFile(path) {
     if (!confirm('Delete this file?')) return
 
-    const { error } = await supabase
-      .storage
-      .from(bucket)
-      .remove([path])
-
-    if (error) {
-      alert(error.message)
-    } else {
-      loadFiles()
-    }
+    const { error } = await supabase.storage.from(bucket).remove([path])
+    if (error) alert(error.message)
+    else loadFiles()
   }
 </script>
 
