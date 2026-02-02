@@ -140,6 +140,12 @@ function createPiece(type) {
             [10, 0, 10],
             [10, 10, 10],
         ];
+     } else if (type === 'W') {
+        return [
+            [11, 11, 11, 11],
+            [11, 11, 11, 11],
+            [11, 11, 11, 11],
+        ];
     }
 }
 
@@ -255,7 +261,7 @@ function updateScore() {
 }
 
 const colors = [
-    null, '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF', '#84321F', '#55FF00', '#FF0040' ,
+    null, '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF', '#84321F', '#55FF00', '#FF0040', '#FF1240' ,
 ];
 
 const arena = createMatrix(12, 20);
